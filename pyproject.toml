@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Tomasz Wrona <tomasz@wrona.me>"]
 readme = "README.md"
-packages = [{include = "transformers_playground"}]
+packages = [{include = "gpt"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
