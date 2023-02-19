@@ -52,10 +52,12 @@ if __name__ == "__main__":
     variant = GPT_TINY
 
     train_dataset = MemoryMapDataset(
-        Path(__file__).parent / "data" / "wikitext" / "train.bin", block_size=variant["max_context_size"]
+        Path(__file__).parent / "data" / "wikitext" / "train.bin",
+        block_size=variant["max_context_size"],
     )
     val_dataset = MemoryMapDataset(
-        Path(__file__).parent / "data" / "wikitext" / "val.bin", block_size=variant["max_context_size"]
+        Path(__file__).parent / "data" / "wikitext" / "val.bin",
+        block_size=variant["max_context_size"],
     )
 
     model = LitGPT(variant)
