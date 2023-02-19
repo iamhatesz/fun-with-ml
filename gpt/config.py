@@ -1,10 +1,10 @@
 GPT_TINY = {
     "vocab_size": 50257,
-    "emb_dim": 128,
-    "max_context_size": 128,
-    "num_blocks": 6,
-    "num_heads": 8,
-    "fc_hidden_dim": 1024,
+    "emb_dim": 32,
+    "max_context_size": 32,
+    "num_blocks": 4,
+    "num_heads": 4,
+    "fc_hidden_dim": 128,
     "drop": 0.1,
 }
 

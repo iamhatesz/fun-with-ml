@@ -8,15 +8,15 @@ from pytorch_lightning import loggers
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, RichModelSummary
 from torch.utils.data import DataLoader
 
-from gpt.config import GPT_SMALL
+from gpt.config import GPT_TINY
 from gpt.data import MemoryMapDataset
 from gpt.model import GPT
 
 
 class LitGPT(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, config: dict):
         super().__init__()
-        self.model = GPT(**GPT_SMALL).to(self.device)
+        self.model = GPT(**config).to(self.device)
 
     def forward(self, tokens: torch.Tensor) -> torch.Tensor:
         logits = self.model(tokens)
@@ -49,14 +49,16 @@ class LitGPT(pl.LightningModule):
 
 
 if __name__ == "__main__":
+    variant = GPT_TINY
+
     train_dataset = MemoryMapDataset(
-        Path(__file__).parent / "data" / "wikitext" / "train.bin", block_size=128
+        Path(__file__).parent / "data" / "wikitext" / "train.bin", block_size=variant["max_context_size"]
     )
     val_dataset = MemoryMapDataset(
-        Path(__file__).parent / "data" / "wikitext" / "val.bin", block_size=128
+        Path(__file__).parent / "data" / "wikitext" / "val.bin", block_size=variant["max_context_size"]
     )
 
-    model = LitGPT()
+    model = LitGPT(variant)
     callbacks = [
         EarlyStopping(monitor="val_loss"),
         ModelCheckpoint(monitor="val_loss"),
@@ -73,6 +75,6 @@ if __name__ == "__main__":
     )
     trainer.fit(
         model,
-        DataLoader(train_dataset, batch_size=64, pin_memory=True, num_workers=2),
-        DataLoader(val_dataset, batch_size=1, pin_memory=True, num_workers=2),
+        DataLoader(train_dataset, batch_size=256, pin_memory=True, num_workers=2),
+        DataLoader(val_dataset, batch_size=64, pin_memory=True, num_workers=2),
     )
