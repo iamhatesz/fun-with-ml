@@ -13,7 +13,7 @@ from pytorch_lightning.callbacks import (
 from torch.utils.data import DataLoader
 
 from gpt.config import GPT_TINY
-from gpt.data import FileDataset
+from gpt.data import MemoryMapDataset
 from gpt.model import GPT
 
 
@@ -55,11 +55,11 @@ class LitGPT(pl.LightningModule):
 if __name__ == "__main__":
     variant = GPT_TINY
 
-    train_dataset = FileDataset(
+    train_dataset = MemoryMapDataset(
         Path(__file__).parent / "data" / "openwebtext" / "train.bin",
         block_size=variant["max_context_size"],
     )
-    val_dataset = FileDataset(
+    val_dataset = MemoryMapDataset(
         Path(__file__).parent / "data" / "openwebtext" / "val.bin",
         block_size=variant["max_context_size"],
     )
