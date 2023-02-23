@@ -54,6 +54,7 @@ class LitGPT(pl.LightningModule):
 
 if __name__ == "__main__":
     variant = GPT_TINY
+    pl.seed_everything(2137, workers=True)
 
     train_dataset = MemoryMapDataset(
         Path(__file__).parent / "data" / "openwebtext" / "train.bin",
