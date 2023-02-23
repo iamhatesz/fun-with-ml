@@ -5,11 +5,15 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from pytorch_lightning import loggers
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, RichModelSummary
+from pytorch_lightning.callbacks import (
+    LearningRateMonitor,
+    ModelCheckpoint,
+    RichModelSummary,
+)
 from torch.utils.data import DataLoader
 
 from gpt.config import GPT_TINY
-from gpt.data import MemoryMapDataset
+from gpt.data import FileDataset
 from gpt.model import GPT
 
 
@@ -51,22 +55,23 @@ class LitGPT(pl.LightningModule):
 if __name__ == "__main__":
     variant = GPT_TINY
 
-    train_dataset = MemoryMapDataset(
-        Path(__file__).parent / "data" / "wikitext" / "train.bin",
+    train_dataset = FileDataset(
+        Path(__file__).parent / "data" / "openwebtext" / "train.bin",
         block_size=variant["max_context_size"],
     )
-    val_dataset = MemoryMapDataset(
-        Path(__file__).parent / "data" / "wikitext" / "val.bin",
+    val_dataset = FileDataset(
+        Path(__file__).parent / "data" / "openwebtext" / "val.bin",
         block_size=variant["max_context_size"],
     )
 
     model = LitGPT(variant)
     callbacks = [
-        EarlyStopping(monitor="val_loss"),
-        ModelCheckpoint(monitor="val_loss"),
+        ModelCheckpoint(monitor="val_loss", save_top_k=3, every_n_epochs=1),
         RichModelSummary(),
+        LearningRateMonitor(logging_interval="step"),
     ]
     logger = loggers.WandbLogger(project="gpt", log_model=True)
+    logger.watch(model)
     trainer = pl.Trainer(
         accelerator="gpu",
         devices=1,
