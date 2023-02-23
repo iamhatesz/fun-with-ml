@@ -7,7 +7,9 @@ from transformers import AutoTokenizer
 
 if __name__ == "__main__":
     raw_dataset = load_dataset("openwebtext")
-    dataset = raw_dataset["train"].train_test_split(test_size=0.0005, seed=2137, shuffle=True)
+    dataset = raw_dataset["train"].train_test_split(
+        test_size=0.0005, seed=2137, shuffle=True
+    )
     dataset["val"] = dataset.pop("test")
 
     tokenizer = AutoTokenizer.from_pretrained("gpt2")
