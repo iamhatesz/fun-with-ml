@@ -82,6 +82,6 @@ if __name__ == "__main__":
     )
     trainer.fit(
         model,
-        DataLoader(train_dataset, batch_size=256, pin_memory=True, num_workers=2),
-        DataLoader(val_dataset, batch_size=64, pin_memory=True, num_workers=2),
+        DataLoader(train_dataset, batch_size=256, pin_memory=False, num_workers=2),
+        DataLoader(val_dataset, batch_size=64, pin_memory=False, num_workers=2),
     )
