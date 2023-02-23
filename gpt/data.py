@@ -1,7 +1,16 @@
 from pathlib import Path
 
 import numpy as np
-from torch.utils.data import DataLoader, Dataset
+import torch
+from torch.utils.data import DataLoader, Dataset, TensorDataset
+
+
+class FileDataset(TensorDataset):
+    def __init__(self, file_path: Path, block_size: int):
+        arr = np.fromfile(str(file_path), dtype=np.uint16).astype(np.int64)
+        arr_size = (arr.size // block_size) * block_size + 1
+        tokens = torch.from_numpy(arr[:arr_size])
+        super().__init__(tokens[:-1].view(-1, block_size), tokens[1:].view(-1, block_size))
 
 
 class MemoryMapDataset(Dataset):
