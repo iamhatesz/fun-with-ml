@@ -1,5 +1,6 @@
 lightning_logs
 wandb
+data
 *.bin
 
 # Created by https://www.toptal.com/developers/gitignore/api/linux,windows,macos,jetbrains+all,virtualenv,python,jupyternotebooks,dotenv
