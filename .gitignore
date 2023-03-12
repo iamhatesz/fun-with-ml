@@ -2,6 +2,7 @@ lightning_logs
 wandb
 data
 *.bin
+*.ckpt
 
 # Created by https://www.toptal.com/developers/gitignore/api/linux,windows,macos,jetbrains+all,virtualenv,python,jupyternotebooks,dotenv
 # Edit at https://www.toptal.com/developers/gitignore?templates=linux,windows,macos,jetbrains+all,virtualenv,python,jupyternotebooks,dotenv
