@@ -4,7 +4,10 @@ version = "0.1.0"
 description = ""
 authors = ["Tomasz Wrona <tomasz@wrona.me>"]
 readme = "README.md"
-packages = [{include = "gpt"}]
+packages = [
+    {include = "gan"},
+    {include = "gpt"},
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
