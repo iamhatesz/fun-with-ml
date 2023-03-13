@@ -6,8 +6,8 @@ Based on: https://arxiv.org/abs/1406.2661
 
 Generated fakes:
 
-![Generated fakes](./fakes.png)
+![Generated fakes](./assets/fakes.png)
 
 Training plots:
 
-![Training plots](./plots.png)
+![Training plots](./assets/plots.png)
