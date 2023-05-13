@@ -1,3 +1,7 @@
+import subprocess
+import tempfile
+from pathlib import Path
+
 import gradio as gr
 import torch
 from diffusers import StableDiffusionInpaintPipeline
@@ -19,6 +23,7 @@ _PIPE: StableDiffusionInpaintPipeline | None = None
 _GENERATOR: torch.Generator | None = None
 _PAINTER: Generator | None = None
 _INITIAL_IMAGE: Image.Image | None = None
+_OUTPUT_FILE = "output.mp4"
 
 
 def generate_initial_image(
@@ -79,15 +84,33 @@ def generate_animation(
     animation = animate(
         _INITIAL_IMAGE, _PAINTER, num_zoom_steps, zoom_step_size, num_zoom_step_interps
     )
-    animation[0].save(
-        "output.gif",
-        save_all=True,
-        append_images=animation[1:],
-        optimize=True,
-        duration=frame_duration,
-        loop=0,
-    )
-    return "output.gif"
+    fps = 1000 // frame_duration
+    _export(animation, _OUTPUT_FILE, fps)
+    return _OUTPUT_FILE
+
+
+def _export(frames: list[Image.Image], output: str, fps: int):
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        for i, frame in enumerate(frames):
+            frame.save(Path(tmp_dir) / f"frame_{i:06d}.png")
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-framerate",
+                str(fps),
+                "-pattern_type",
+                "glob",
+                "-i",
+                f"{tmp_dir}/frame_*.png",
+                "-c:v",
+                "libx264",
+                "-pix_fmt",
+                "yuv420p",
+                output,
+            ],
+            check=True,
+        )
 
 
 def interface() -> gr.Blocks:
@@ -145,7 +168,7 @@ def interface() -> gr.Blocks:
             with gr.Column():
                 submit_animation = gr.Button("Generate animation")
                 submit_animation.style()
-                animation = gr.Image(label="Animation")
+                animation = gr.Video(label="Animation", interactive=False)
 
         submit_initial_image.click(
             generate_initial_image,
