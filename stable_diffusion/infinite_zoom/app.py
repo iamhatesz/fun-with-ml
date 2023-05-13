@@ -174,7 +174,7 @@ def interface() -> gr.Blocks:
     return root
 
 
-demo = interface()
+demo = interface().queue()
 
 
 if __name__ == "__main__":
