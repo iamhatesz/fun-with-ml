@@ -1,3 +1,4 @@
+import itertools
 import subprocess
 import tempfile
 from pathlib import Path
@@ -7,7 +8,8 @@ import torch
 from diffusers import StableDiffusionInpaintPipeline
 from PIL import Image
 
-from stable_diffusion.infinite_zoom.inpainting import Generator, animate
+from stable_diffusion.infinite_zoom.inpainting import (Animation, Generator, animate,
+                                                       outpaint)
 
 _LOADED_MODELS: dict[str, StableDiffusionInpaintPipeline] = {}
 _DTYPE = torch.float16
@@ -23,6 +25,7 @@ _PIPE: StableDiffusionInpaintPipeline | None = None
 _GENERATOR: torch.Generator | None = None
 _PAINTER: Generator | None = None
 _INITIAL_IMAGE: Image.Image | None = None
+_FRAMES: Animation | None = None
 _OUTPUT_FILE = "output.mp4"
 
 
@@ -74,16 +77,26 @@ def generate_initial_image(
     return _INITIAL_IMAGE
 
 
-def generate_animation(
+def generate_frames(
     num_zoom_steps: int,
+    zoom_step_size: int,
+) -> Animation:
+    global _PAINTER, _INITIAL_IMAGE, _FRAMES
+    _FRAMES = list(
+        itertools.islice(
+            outpaint(_INITIAL_IMAGE, _PAINTER, zoom_step_size), num_zoom_steps
+        )
+    )
+    return _FRAMES
+
+
+def generate_animation(
     zoom_step_size: int,
     num_zoom_step_interps: int,
     frame_duration: int,
 ) -> str:
-    global _PAINTER, _INITIAL_IMAGE
-    animation = animate(
-        _INITIAL_IMAGE, _PAINTER, num_zoom_steps, zoom_step_size, num_zoom_step_interps
-    )
+    global _FRAMES
+    animation = animate(_FRAMES, zoom_step_size, num_zoom_step_interps)
     fps = 1000 // frame_duration
     _export(animation, _OUTPUT_FILE, fps)
     return _OUTPUT_FILE
@@ -148,8 +161,8 @@ def interface() -> gr.Blocks:
                     seed = gr.Slider(-1, 1_000_000, step=1, value=-1, label="Seed")
             with gr.Column():
                 submit_initial_image = gr.Button("Generate initial image")
-                submit_initial_image.style()
                 initial_image = gr.Image(label="Initial image", type="pil")
+
         with gr.Row():
             with gr.Column():
                 with gr.Box():
@@ -159,6 +172,13 @@ def interface() -> gr.Blocks:
                     zoom_step_size = gr.Slider(
                         32, 128, value=128, step=32, label="Zoom step size"
                     )
+            with gr.Column():
+                submit_frames = gr.Button("Generate frames")
+                frames = gr.Gallery(label="Generated frames")
+
+        with gr.Row():
+            with gr.Column():
+                with gr.Box():
                     num_zoom_step_interps = gr.Slider(
                         2, 32, value=16, step=2, label="Zoom step interpolations"
                     )
@@ -167,7 +187,6 @@ def interface() -> gr.Blocks:
                     )
             with gr.Column():
                 submit_animation = gr.Button("Generate animation")
-                submit_animation.style()
                 animation = gr.Video(label="Animation", interactive=False)
 
         submit_initial_image.click(
@@ -184,10 +203,17 @@ def interface() -> gr.Blocks:
             ],
             outputs=[initial_image],
         )
+        submit_frames.click(
+            generate_frames,
+            inputs=[
+                num_zoom_steps,
+                zoom_step_size,
+            ],
+            outputs=[frames],
+        )
         submit_animation.click(
             generate_animation,
             inputs=[
-                num_zoom_steps,
                 zoom_step_size,
                 num_zoom_step_interps,
                 frame_duration,
