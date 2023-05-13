@@ -1,12 +1,8 @@
 from typing import Callable
 
 import torch
-from diffusers import StableDiffusionInpaintPipeline
 from PIL import Image
 from torchvision import transforms
-
-_DEVICE = "mps"
-_SEED = -1
 
 _to_pillow = transforms.ToPILImage()
 _to_tensor = transforms.PILToTensor()
@@ -145,71 +141,3 @@ def animate(
         all_frames.extend(interps)
     all_frames.append(frames[-1])
     return all_frames
-
-
-def main():
-    prompt = "space, cosmos, photorealistic, 8k"
-    negative_prompt = "frame, borderline, watermark, text, ugly, deformed"
-    num_inference_steps = 20
-    cfg = 9.0
-    size = 512
-    outpaint_size = 128
-
-    model = "stabilityai/stable-diffusion-2-inpainting"
-    pipe = StableDiffusionInpaintPipeline.from_pretrained(model)
-    pipe = pipe.to(_DEVICE)
-    pipe.enable_attention_slicing()
-
-    generator = None
-    if _SEED >= 0:
-        generator = torch.Generator(_DEVICE).manual_seed(_SEED)
-
-    blank_image = Image.new("RGB", (size, size), (0, 0, 0))
-    mask = Image.new("RGB", (size, size), (255, 255, 255))
-
-    initial_image = pipe(
-        prompt=prompt,
-        negative_prompt=negative_prompt,
-        image=blank_image,
-        mask_image=mask,
-        num_inference_steps=num_inference_steps,
-        guidance_scale=cfg,
-        generator=generator,
-    ).images[0]
-
-    initial_image.show()
-
-    image = _to_tensor(initial_image)
-
-    outpaint_prepare_left = transforms.Compose(
-        [
-            transforms.Resize(size - 2 * outpaint_size),
-            transforms.Pad([outpaint_size, 0, 0, 0], padding_mode="reflect"),
-        ]
-    )
-    outpaint_left_raw = outpaint_prepare_left(image)
-    outpaint_left = _to_pillow(outpaint_left_raw)
-    outpaint_left.show()
-
-    xs = torch.arange(outpaint_left_raw.shape[2])
-    outpaint_mask_left = torch.zeros_like(outpaint_left_raw)
-    outpaint_mask_left[:, :, xs < outpaint_size] = 255
-    outpaint_mask_left = _to_pillow(outpaint_mask_left)
-    outpaint_mask_left.show()
-
-    outpaint_left = pipe(
-        prompt=prompt,
-        negative_prompt=negative_prompt,
-        image=outpaint_left,
-        mask_image=outpaint_mask_left,
-        num_inference_steps=num_inference_steps,
-        guidance_scale=cfg,
-        generator=generator,
-        height=outpaint_left.height,
-        width=outpaint_left.width,
-    ).images[0]
-    outpaint_left.show()
-
-
-if __name__ == "__main__":
-    main()
