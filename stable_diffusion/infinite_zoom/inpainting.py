@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Iterable
 
 import torch
 from PIL import Image
@@ -118,23 +118,26 @@ def interp(
     return frames
 
 
-def animate(
+def outpaint(
     initial_image: Image.Image,
     generator: Generator,
-    num_frames: int,
     outpaint_size: int,
-    num_interp_steps: int,
     method: OutpaintMethod = outpaint_sequentially,
-) -> Animation:
+) -> Iterable[Image.Image]:
     resize_to_original = transforms.Resize(initial_image.size)
     image = initial_image
-    frames = [image]
-    for _ in range(num_frames):
+    while True:
         next_image = method(image, outpaint_size, generator)
         next_image = _to_pillow(resize_to_original(_to_tensor(next_image)))
-        frames.append(next_image)
+        yield next_image
         image = next_image
 
+
+def animate(
+    frames: Animation,
+    outpaint_size: int,
+    num_interp_steps: int,
+) -> Animation:
     all_frames = []
     for fa, fb in zip(frames, frames[1:]):
         interps = interp(fa, fb, outpaint_size, num_interps=num_interp_steps)
